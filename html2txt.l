@@ -3,7 +3,6 @@
 #include <string.h>
 FILE *hyplink;
 int lastchar; /* if last output char is newline */
-int deep=0;
 %}
 ntag ("<"[^(([sS][cC][rR][iI][pP][tT])|(!--[sS][cC][rR][iI][pP][tT])|([sS][tT][yY][lL][eE])|([Ff][oO][rR][Mm]))]*">")
 ntage ("<"[^(([sS][cC][rR][iI][pP][tT])|(!--[sS][cC][rR][iI][pP][tT])|([sS][tT][yY][lL][eE])|([Ff][oO][rR][Mm]))">"]*"\>")
@@ -16,19 +15,33 @@ ntage ("<"[^(([sS][cC][rR][iI][pP][tT])|(!--[sS][cC][rR][iI][pP][tT])|([sS][tT][
 %x COMMENT
 %x COMMENTLINE
 %x COMMENTB
+%x HTTP
 %%
 ("<"[sS][cC][rR][iI][pP][tT][^>]*">") 	 	BEGIN(SCPT);
 ("<"[sS][tT][yY][lL][eE][^>]*">") 		BEGIN(NONEED);
 ("<!--"[sS][cC][rR][iI][pP][tT][^>]*">") 	BEGIN(SCPT);
 ("<"[Ff][oO][rR][Mm][^>]*">") 			BEGIN(FORM);
+("<"[aA][\40]*[Hh][Rr][Ee][Ff][^>]*">") {
+    char * now =yytext;
+    int tmp=0;
+    while(yytext[0]!='>'&&!(yytext[0]=='h'&&yytext[1]=='t'&&yytext[2]=='t'&&yytext[3]=='p'))
+        yytext++;
+    while(yytext[0]!='>'&&yytext[0]!=' '&&yytext[0]!='\"'&&yytext[0]!='\''){
+        fprintf(hyplink,"%c",*yytext);
+        yytext++;
+        tmp=1;
+    }
+    if(tmp) fprintf(hyplink,"\n");
+    yytext=now;
+}
+
 ("<--") BEGIN(COMMENT);
-("-->") ;
-("<"[^>]*"/">) ;
 ("<"[^/][^>]*) BEGIN(TAG);
 ("</"[^>]*) BEGIN(TAG); 
 ("//") BEGIN(COMMENTLINE);
 ("/*") BEGIN(COMMENTB);
-("\r") ;
+(("<"[^>]*"/">)|("\r")|("{"[.]*"}")|(\t)|(\40)|("-->"))
+
 ("&qot;") putchar('\'');
 ("&gt;") putchar('>');
 ("&lt;") putchar('<');
@@ -46,7 +59,7 @@ ntage ("<"[^(([sS][cC][rR][iI][pP][tT])|(!--[sS][cC][rR][iI][pP][tT])|([sS][tT][
 <COMMENTB>("/"*("*"|[^*/]|[^*/]"/"*)*("*"|[^*/])) ;
 <COMMENTB>"*/" BEGIN(INITIAL); 
 <COMMENT>([\n\r]|([^-])|(-[^-])|(--[^>]))*
-<COMMENT>"-->" BEGIN(INITIAL);
+<COMMENT>("-->") BEGIN(INITIAL);
 %%
 
 int main(int  argc, char **argv )

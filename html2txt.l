@@ -17,8 +17,12 @@ int lastchar; /* if last output char is newline */
 ("<"[Ff][oO][rR][Mm][^>]*">") 			BEGIN(FORM);
 
 <SCPT>("</"[sS][cC][rR][iI][pP][tT][^>]*">")  	BEGIN(INITIAL);
+<SCPT>[.\n]
+<NONEED>[.\n]
+<NONEED>("</"[sS][tT][yY][lL][eE][^>]*">") 		BEGIN(INITIAL);
+<FORM>[.\n]
+<FORM>("</"[Ff][oO][rR][Mm][^>]*">") 			BEGIN(INITIAL);
 
-   /* 请完成 */
 %%
 
 int main(int  argc, char **argv )
